@@ -135,6 +135,7 @@ def train(
         if (e+1) % 10 == 0:
             tf.print(f'Saving model at epoch {e+1}...\n')
             nst_model.save(f'{checkpoint_dir}/{nst_model.name}_iteration_{e+1}', save_format='tf')
+            nst_model.decoder.save(f'{checkpoint_dir}/{nst_model.name}_decoder_iteration_{e+1}', save_format='tf')
             tf.print(f'Saved model at epoch {e+1}\n')
 
 
