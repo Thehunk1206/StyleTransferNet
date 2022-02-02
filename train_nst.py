@@ -153,6 +153,7 @@ def main():
     parser.add_argument('--loss_w', type=float, default=0.5, help='The weight of the style loss')
     parser.add_argument('--encoder_model_arc', type=str, default='vgg', help='The architecture of the encoder model')
     parser.add_argument('--log_dir', type=str, default='logs/', help='The directory to save the tensorboard logs')
+    parser.add_argument('--saving_freq', type=int, default=2, help='The frequency of saving the trained model')
     args = parser.parse_args()
 
     train(
@@ -167,6 +168,7 @@ def main():
         loss_w=args.loss_w,
         encoder_model_arc=args.encoder_model_arc,
         log_dir=args.log_dir,
+        saving_freq=args.saving_freq,
     )
 
 
