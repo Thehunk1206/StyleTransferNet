@@ -160,11 +160,12 @@ if __name__ == "__main__":
 
     train_ds = tfdataset.data_loader(dataset_type='train', do_augment=True)
 
-    for content, style_img in train_ds.take(1):
-        tf.print(f'Max of content image: {tf.reduce_max(content)}')
-        tf.print(f'Max of style image: {tf.reduce_max(style_img)}')
-        tf.print(f'Min of content image: {tf.reduce_min(content)}')
-        tf.print(f'Min of style image: {tf.reduce_min(style_img)}')
+    for content, style_img in train_ds:
+        tf.print(f'content shape: {content.shape}, style shape: {style_img.shape}')
+        # tf.print(f'Max of content image: {tf.reduce_max(content)}')
+        # tf.print(f'Max of style image: {tf.reduce_max(style_img)}')
+        # tf.print(f'Min of content image: {tf.reduce_min(content)}')
+        # tf.print(f'Min of style image: {tf.reduce_min(style_img)}')
     #     plt.figure(figsize=(10,10))
     #     plt.subplot(1,2,1)
     #     plt.imshow(content.numpy()[0])
