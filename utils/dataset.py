@@ -117,7 +117,7 @@ class TfdataPipeline:
                     .map(lambda x,y : (self._augment(self.load_content_style_image(x,y)[0]), self._augment(self.load_content_style_image(x,y)[1])) if do_augment 
                         else (self.load_content_style_image(x,y)[0], self.load_content_style_image(x,y)[1]), 
                         num_parallel_calls=tf.data.AUTOTUNE)
-                    .cache()
+                    # .cache()
                     .shuffle(buffer_size=200)
                     .batch(self.batch_size)
                     .prefetch(buffer_size=tf.data.AUTOTUNE)
@@ -154,11 +154,12 @@ if __name__ == "__main__":
     from matplotlib import pyplot as plt
     conten_image_path = './style_content_dataset/content_images/0a0a615629231821.jpg'
     style_image_path = './style_content_dataset/style_images/10.jpg'
-    batch_size = 1
+    batch_size = 16
     # Test the class
     tfdataset = TfdataPipeline(BASE_DATASET_DIR='./style_content_dataset/', batch_size=batch_size)
 
     train_ds = tfdataset.data_loader(dataset_type='train', do_augment=True)
+    test_ds = tfdataset.data_loader(dataset_type='test', do_augment=True)
 
     for content, style_img in train_ds:
         tf.print(f'content shape: {content.shape}, style shape: {style_img.shape}')
@@ -172,3 +173,5 @@ if __name__ == "__main__":
     #     plt.subplot(1,2,2)
     #     plt.imshow(style_img.numpy()[0])
     # plt.show()
+    for content, style_img in test_ds:
+        tf.print(f'content shape: {content.shape}, style shape: {style_img.shape}')
