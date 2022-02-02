@@ -14,18 +14,18 @@ class Decoder(Model):
         super(Decoder, self).__init__(name=name, *args, **kwargs)
 
         self.block4_conv1 = layers.Conv2D(filters=512, kernel_size=3, strides=1, padding='same', activation='relu', name='block4_conv1')
-        self.block4_conv2 = layers.Conv2D(filters=512, kernel_size=3, strides=1, padding='same', activation='relu', name='block4_conv2')
+        self.block4_conv2 = layers.Conv2D(filters=256, kernel_size=3, strides=1, padding='same', activation='relu', name='block4_conv2')
 
         self.block3_conv1 = layers.Conv2D(filters=256, kernel_size=3, strides=1, padding='same', activation='relu', name='block3_conv1')
         self.block3_conv2 = layers.Conv2D(filters=256, kernel_size=3, strides=1, padding='same', activation='relu', name='block3_conv2')
         self.block3_conv3 = layers.Conv2D(filters=256, kernel_size=3, strides=1, padding='same', activation='relu', name='block3_conv3')
-        self.block3_conv4 = layers.Conv2D(filters=256, kernel_size=3, strides=1, padding='same', activation='relu', name='block3_conv4')
+        self.block3_conv4 = layers.Conv2D(filters=128, kernel_size=3, strides=1, padding='same', activation='relu', name='block3_conv4')
 
         self.block2_conv1 = layers.Conv2D(filters=128, kernel_size=3, strides=1, padding='same', activation='relu', name='block2_conv1')
-        self.block2_conv2 = layers.Conv2D(filters=128, kernel_size=3, strides=1, padding='same', activation='relu', name='block2_conv2')
+        self.block2_conv2 = layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='same', activation='relu', name='block2_conv2')
 
         self.block1_conv1 = layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='same', activation='relu', name='block1_conv1')
-        self.block1_conv2 = layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='same', activation='relu', name='block1_conv2')
+        self.block1_conv2 = layers.Conv2D(filters=32, kernel_size=3, strides=1, padding='same', activation='relu', name='block1_conv2')
 
         self.out = layers.Conv2D(filters=3, kernel_size=3, strides=1, padding='same', name='out')
     
@@ -48,10 +48,9 @@ class Decoder(Model):
 
         x = self.block1_conv1(x)
         x = self.block1_conv2(x)
-        x = layers.UpSampling2D(size=(2, 2))(x)
-
+        
         x = self.out(x)
-        x = tf.nn.tanh(x)
+        # x = tf.nn.tanh(x)
 
         return x
 
@@ -69,7 +68,7 @@ class Decoder(Model):
     
 
 if __name__ == '__main__':
-    dummy_content_feat = tf.random.normal(shape=(1, 16, 16, 512))
+    dummy_content_feat = tf.random.normal(shape=(1, 32, 32, 512))
     decoder = Decoder()
 
     decoder.summary()

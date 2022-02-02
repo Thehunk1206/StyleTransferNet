@@ -7,9 +7,14 @@ from tensorflow.keras import Model
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow.keras.losses import Loss
 
-from model.encoder import Encoder
-from model.decoder import Decoder
-from model.adaIn import AdaIn
+try:
+    from model.encoder import Encoder
+    from model.decoder import Decoder
+    from model.adaIn import AdaIn
+except:
+    from encoder import Encoder
+    from decoder import Decoder
+    from adaIn import AdaIn
 
 class StyleTransferNet(Model):
     def __init__(self, IMG_H:int=256, IMG_W:int=256, encoder_model_arc:str = 'vgg', name:str='StyleTransferNet', *args, **kwargs):
@@ -103,8 +108,8 @@ class StyleTransferNet(Model):
     
 
 if __name__ == "__main__":
-    dummy_content_img = tf.random.uniform(shape=(1, 256, 256, 3))
-    dummy_style_img = tf.random.uniform(shape=(1, 256, 256, 3))
+    dummy_content_img =  tf.random.uniform(shape=(1, 256, 256, 3), minval=0.0, maxval=255.0, dtype=tf.float32)
+    dummy_style_img = tf.random.uniform(shape=(1, 256, 256, 3), minval=0.0, maxval=255.0, dtype=tf.float32)
 
     style_transfer_net = StyleTransferNet(IMG_H=256, IMG_W=256, encoder_model_arc='vgg')
     style_transfer_net.summary()
@@ -119,3 +124,26 @@ if __name__ == "__main__":
         f'content_feat.shape:   {[f.shape for f in content_feat]}\n',
     )
     
+    tf.print(
+        f'Max of stylized_img: {tf.reduce_max(stylized_img)}\n',
+        f'Max of stylized_feat: {tf.reduce_max([tf.reduce_max(f) for f in stylized_feat])}\n',
+        f'Max of adain_vec: {tf.reduce_max(adain_vec)}\n',
+        f'Max of style_feat: {tf.reduce_max([tf.reduce_max(f) for f in style_feat])}\n',
+        f'Max of content_feat: {tf.reduce_max([tf.reduce_max(f) for f in content_feat])}\n',
+    )
+
+    tf.print(
+        f'Min of stylized_img: {tf.reduce_min(stylized_img)}\n',
+        f'Min of stylized_feat: {tf.reduce_min([tf.reduce_min(f) for f in stylized_feat])}\n',
+        f'Min of adain_vec: {tf.reduce_min(adain_vec)}\n',
+        f'Min of style_feat: {tf.reduce_min([tf.reduce_min(f) for f in style_feat])}\n',
+        f'Min of content_feat: {tf.reduce_min([tf.reduce_min(f) for f in content_feat])}\n',
+    )
+
+    tf.print(
+        f'Mean of stylized_img: {tf.reduce_mean(stylized_img)}\n',
+        f'Mean of stylized_feat: {tf.reduce_mean([tf.reduce_mean(f) for f in stylized_feat])}\n',
+        f'Mean of adain_vec: {tf.reduce_mean(adain_vec)}\n',
+        f'Mean of style_feat: {tf.reduce_mean([tf.reduce_mean(f) for f in style_feat])}\n',
+        f'Mean of content_feat: {tf.reduce_mean([tf.reduce_mean(f) for f in content_feat])}\n',
+    )
