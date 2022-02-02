@@ -117,9 +117,9 @@ class TfdataPipeline:
                     .map(lambda x,y : (self._augment(self.load_content_style_image(x,y)[0]), self._augment(self.load_content_style_image(x,y)[1])) if do_augment 
                         else (self.load_content_style_image(x,y)[0], self.load_content_style_image(x,y)[1]), 
                         num_parallel_calls=tf.data.AUTOTUNE)
-                    .shuffle(buffer_size=100)
-                    .batch(self.batch_size)
                     .cache()
+                    .shuffle(buffer_size=200)
+                    .batch(self.batch_size)
                     .prefetch(buffer_size=tf.data.AUTOTUNE)
         )
 
