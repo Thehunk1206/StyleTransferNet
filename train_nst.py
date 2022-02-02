@@ -112,6 +112,7 @@ def train(
         f'Learning Rate             : {learning_rate}\n',
         f'Loss Weight               : {loss_w}\n',
         f'Encoder Model Architecture: {encoder_model_arc}\n',
+        f'Saving Frequency          : {saving_freq}\n',
         f'\n',
     )
 
