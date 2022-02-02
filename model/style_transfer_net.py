@@ -7,9 +7,9 @@ from tensorflow.keras import Model
 from tensorflow.keras.optimizers import Optimizer
 from tensorflow.keras.losses import Loss
 
-from encoder import Encoder
-from decoder import Decoder
-from adaIn import AdaIn
+from model.encoder import Encoder
+from model.decoder import Decoder
+from model.adaIn import AdaIn
 
 class StyleTransferNet(Model):
     def __init__(self, IMG_H:int=256, IMG_W:int=256, encoder_model_arc:str = 'vgg', name:str='StyleTransferNet', *args, **kwargs):
@@ -31,14 +31,14 @@ class StyleTransferNet(Model):
         self.decoder = Decoder()
 
     def call(self, content_img:tf.Tensor, style_img:tf.Tensor, training=None)->Tuple[tf.Tensor, Tuple[tf.Tensor,...], tf.Tensor, Tuple[tf.Tensor,...], Tuple[tf.Tensor,...]]:
-        content_feat = self.encoder_model(content_img)
-        style_feat = self.encoder_model(style_img)
+        content_feat = self.encoder_model(content_img) # Extract content features from content image
+        style_feat = self.encoder_model(style_img) # Extract style features from style image
 
-        adain_vec = self.adaIn(content_feat[-1], style_feat[-1])
+        adain_vec = self.adaIn(content_feat[-1], style_feat[-1]) # Normalize content features, shift and scale with style features(AdaIn)
 
-        stylized_img = self.decoder(adain_vec, training=training)
+        stylized_img = self.decoder(adain_vec, training=training) # Generate stylized image from normalized content features
 
-        stylized_feat = self.encoder_model(stylized_img)
+        stylized_feat = self.encoder_model(stylized_img) # Extract stylized features from stylized image
 
         return stylized_img, stylized_feat, adain_vec, style_feat, content_feat
     

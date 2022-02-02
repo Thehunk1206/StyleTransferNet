@@ -2,3 +2,5 @@
 style_content_dataset/
 __pycache__/
 check_corrupt_image.py
+logs/
+trained_model/

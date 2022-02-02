@@ -51,7 +51,7 @@ class Decoder(Model):
         x = layers.UpSampling2D(size=(2, 2))(x)
 
         x = self.out(x)
-        x = tf.nn.sigmoid(x)
+        x = tf.nn.tanh(x)
 
         return x
 
