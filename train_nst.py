@@ -27,6 +27,7 @@ def train(
     loss_w:float = 0.5,
     encoder_model_arc:str = 'vgg',
     log_dir:str = 'logs/',
+    saving_freq:int = 5,
 ):
     '''
     Main Train fucntion to train our Style Transfer Net.
@@ -132,7 +133,7 @@ def train(
             tf.summary.scalar('content_loss', content_loss, step=e)
             tf.summary.scalar('style_loss', style_loss, step=e)
         
-        if (e+1) % 10 == 0:
+        if (e+1) % saving_freq == 0:
             tf.print(f'Saving model at epoch {e+1}...\n')
             nst_model.save(f'{checkpoint_dir}/{nst_model.name}_iteration_{e+1}', save_format='tf')
             nst_model.decoder.save(f'{checkpoint_dir}/{nst_model.name}_decoder_iteration_{e+1}', save_format='tf')
