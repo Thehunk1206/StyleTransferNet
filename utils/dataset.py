@@ -4,8 +4,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import glob
 
 import tensorflow as tf
-from tensorflow.keras.applications.vgg19 import preprocess_input
 
+from preprocess_io import preprocess_input, process_out
 
 class TfdataPipeline:
     '''
@@ -98,6 +98,7 @@ class TfdataPipeline:
         x = tf.image.random_brightness(x, max_delta=0.1)
         x = tf.image.random_contrast(x, lower=0.9, upper=1.1)
         x = tf.image.random_crop(x, [self.IMG_H, self.IMG_W, self.IMG_C])
+        x = (x - tf.reduce_min(x)) / (tf.reduce_max(x) - tf.reduce_min(x))
 
         return x
     
@@ -118,7 +119,7 @@ class TfdataPipeline:
                         else (self.load_content_style_image(x,y)[0], self.load_content_style_image(x,y)[1]), 
                         num_parallel_calls=tf.data.AUTOTUNE)
                     # .cache()
-                    .shuffle(buffer_size=200)
+                    .shuffle(buffer_size=20)
                     .batch(self.batch_size)
                     .prefetch(buffer_size=tf.data.AUTOTUNE)
         )
@@ -154,24 +155,30 @@ if __name__ == "__main__":
     from matplotlib import pyplot as plt
     conten_image_path = './style_content_dataset/content_images/0a0a615629231821.jpg'
     style_image_path = './style_content_dataset/style_images/10.jpg'
-    batch_size = 16
+    batch_size = 1
     # Test the class
     tfdataset = TfdataPipeline(BASE_DATASET_DIR='./style_content_dataset/', batch_size=batch_size)
 
     train_ds = tfdataset.data_loader(dataset_type='train', do_augment=True)
     test_ds = tfdataset.data_loader(dataset_type='test', do_augment=True)
 
-    for content, style_img in train_ds:
-        tf.print(f'content shape: {content.shape}, style shape: {style_img.shape}')
+    for content, style_img in train_ds.take(1):
+        content   = preprocess_input(content*255.0)
+        style_img = preprocess_input(style_img*255.0)
+        # content = content*255.0
+        # style_img = style_img*255.0
+        # tf.print(f'content shape: {content.shape}, style shape: {style_img.shape}')
         # tf.print(f'Max of content image: {tf.reduce_max(content)}')
         # tf.print(f'Max of style image: {tf.reduce_max(style_img)}')
         # tf.print(f'Min of content image: {tf.reduce_min(content)}')
         # tf.print(f'Min of style image: {tf.reduce_min(style_img)}')
-    #     plt.figure(figsize=(10,10))
-    #     plt.subplot(1,2,1)
-    #     plt.imshow(content.numpy()[0])
-    #     plt.subplot(1,2,2)
-    #     plt.imshow(style_img.numpy()[0])
-    # plt.show()
-    for content, style_img in test_ds:
-        tf.print(f'content shape: {content.shape}, style shape: {style_img.shape}')
+
+        content = process_out(content)/255.0
+        style_img = process_out(style_img)/255.0
+        plt.figure(figsize=(10,10))
+        plt.subplot(1,2,1)
+        plt.imshow(content.numpy()[0])
+        plt.subplot(1,2,2)
+        plt.imshow(style_img.numpy()[0])
+    plt.show()
+

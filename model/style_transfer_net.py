@@ -43,7 +43,12 @@ class StyleTransferNet(Model):
 
         stylized_img = self.decoder(adain_vec, training=training) # Generate stylized image from normalized content features
 
+        # Preprocess stylized image
+        stylized_img = self.encoder.process_input(stylized_img)
+
         stylized_feat = self.encoder_model(stylized_img) # Extract stylized features from stylized image
+
+        stylized_img = self.encoder.process_output(stylized_img) # Postprocess stylized image
 
         return stylized_img, stylized_feat, adain_vec, style_feat, content_feat
     
@@ -76,7 +81,7 @@ class StyleTransferNet(Model):
         assert self.style_loss is not None, 'style_loss is not defined, call compile() first'
 
         with tf.GradientTape() as tape:
-            _, stylized_feat, adain_vec, style_feat, _ = self.call(content_img, style_img, training=True)
+            _, stylized_feat, adain_vec, style_feat, _ = self(content_img, style_img, training=True)
             content_loss = self.content_loss(stylized_feat[-1], adain_vec)
             style_loss = self.style_loss(stylized_feat, style_feat)
             total_loss = content_loss + self.loss_weight * style_loss
@@ -113,6 +118,9 @@ if __name__ == "__main__":
 
     style_transfer_net = StyleTransferNet(IMG_H=256, IMG_W=256, encoder_model_arc='vgg')
     style_transfer_net.summary()
+
+    dummy_content_img = style_transfer_net.encoder.process_input(dummy_content_img)
+    dummy_style_img = style_transfer_net.encoder.process_input(dummy_style_img)
 
     stylized_img, stylized_feat, adain_vec, style_feat, content_feat = style_transfer_net(dummy_content_img, dummy_style_img)
 

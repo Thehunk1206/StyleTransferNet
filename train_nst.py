@@ -6,11 +6,11 @@ from datetime import datetime
 import argparse
 
 import tensorflow as tf
-from tensorflow.keras.applications.vgg19 import preprocess_input
 from tensorflow.keras.optimizers import Adam
 
 from utils.dataset import TfdataPipeline
 from utils.losses import ContentLoss, StyleLoss
+from utils.preprocess_io import preprocess_input
 from model.style_transfer_net import StyleTransferNet
 
 tf.random.set_seed(42)

@@ -31,6 +31,34 @@ class Encoder(object):
                 f'The model architecture {self.model_arc} is not supported. '
                 f'Please choose one of the following: {self.__supported_model_arc}.'
             )
+    
+    def process_input(self, x: tf.Tensor, swap_channel:bool=True) -> tf.Tensor:
+        '''
+        Preprocess the input image.
+        '''
+        assert x.shape[-1] == 3, f'The shape of x must be (batch_size, height, width, channel). But got {x.shape}.'
+
+        
+        # Swap the channel of the image
+        if swap_channel:
+            x = tf.reverse(x, axis=[-1])
+            x = x - tf.constant([103.939, 116.779, 123.68])
+            return x
+        else:
+            x = x - tf.constant([123.68, 116.779, 103.939])
+            return x
+    
+    def process_output(self, x:tf.Tensor, swap_channel:bool = True):
+        '''
+        Process output 
+        '''
+        if swap_channel:
+            x = x + tf.constant([103.939, 116.779, 123.68])
+            x = tf.reverse(x, axis=[-1])
+            return x
+        else:
+            x = x + tf.constant([123.68, 116.779, 103.939])
+            return x
 
 if __name__ == "__main__":
     encoder = Encoder(model_arc='vgg', inshape=(256,256,3), is_trainable=False)
