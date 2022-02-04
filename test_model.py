@@ -6,9 +6,12 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import tensorflow as tf
 from tensorflow.keras import models
-from tensorflow.keras.applications.vgg19 import preprocess_input
+
 
 from utils.dataset import TfdataPipeline
+from utils.preprocess_io import preprocess_input, process_output
+from model.adaIn import AdaIn
+from model.encoder import Encoder
 
 from matplotlib import pyplot as plt
 
@@ -50,6 +53,11 @@ def run_test(
     
     nst_model = get_model(model_path)
 
+    encoder = Encoder()
+    encoder_model = encoder.get_encoder()
+    adain = AdaIn()
+
+
     tf.print('[info] loading dataset...')
     tf_dataset = TfdataPipeline(
         BASE_DATASET_DIR=dataset_dir,
@@ -57,11 +65,10 @@ def run_test(
     )
     test_ds = tf_dataset.data_loader(dataset_type='test', do_augment=False)
 
+
     tf.print('[info] testing...')
 
     for content_img, style_img in test_ds.take(1):
-        content_img = tf.cast(content_img, tf.float32)
-        style_img = tf.cast(style_img, tf.float32)
 
         content_img = tf.image.resize(content_img, (256, 256))
         style_img = tf.image.resize(style_img, (256, 256))
@@ -69,12 +76,21 @@ def run_test(
         content_img_p = preprocess_input(content_img*255.0)
         style_img_p = preprocess_input(style_img*255.0)
 
-        output,_,_,_,_ = nst_model(content_img_p, style_img_p)
+        content_feat = encoder_model(content_img_p)
+        style_feat = encoder_model(style_img_p)
+
+        target_feat = adain(content_feat[-1], style_feat[-1])
+
+        output = nst_model(target_feat)
+
+        output = process_output(output)
         
         # min max normalization
+        output = (output - tf.reduce_min(output)) / (tf.reduce_max(output) - tf.reduce_min(output))
+
+        # Clipping the values between 0 and 255
         # output = tf.clip_by_value(output, 0.0, 255.0)
-        output_c = tf.unstack(output, axis=-1)
-        output = tf.stack([output_c[2], output_c[1], output_c[0]], axis=-1)
+        # output = output/255.0
 
         tf.print(f'[info] output shape: {output.shape}')
         tf.print(f'[info] Max value: {tf.reduce_max(output)}')
@@ -84,7 +100,7 @@ def run_test(
     plot_images(content_img, style_img, output)
 
 if __name__ == "__main__":
-    model_path = 'trained_model/StyleTransferNet_iteration_17/'
+    model_path = 'trained_model/StyleTransferNet_decoder_iteration_5'
 
     dataset_dir = 'style_content_dataset/'
 

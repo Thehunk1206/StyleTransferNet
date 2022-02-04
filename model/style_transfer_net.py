@@ -41,10 +41,9 @@ class StyleTransferNet(Model):
 
         adain_vec = self.adaIn(content_feat[-1], style_feat[-1]) # Normalize content features, shift and scale with style features(AdaIn)
 
-        stylized_img = self.decoder(adain_vec, training=training) # Generate stylized image from normalized content features
+        stylized_img = self.decoder(adain_vec, training=training) # Generate stylized image from adain vec (target feat)
 
-        # Preprocess stylized image
-        stylized_img = self.encoder.process_input(stylized_img)
+        stylized_img = self.encoder.process_input(stylized_img) # Preprocess stylized image
 
         stylized_feat = self.encoder_model(stylized_img) # Extract stylized features from stylized image
 
@@ -89,7 +88,7 @@ class StyleTransferNet(Model):
         grads = tape.gradient(total_loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(grads, self.trainable_variables))
 
-        return total_loss, content_loss, style_loss
+        return content_loss, style_loss
 
     def summary(self):
         inp1 = tf.keras.Input(shape=(self.IMG_H, self.IMG_W, 3))
@@ -123,6 +122,8 @@ if __name__ == "__main__":
     dummy_style_img = style_transfer_net.encoder.process_input(dummy_style_img)
 
     stylized_img, stylized_feat, adain_vec, style_feat, content_feat = style_transfer_net(dummy_content_img, dummy_style_img)
+
+    stylized_img = style_transfer_net.encoder.process_output(stylized_img)
 
     tf.print(
         f'\nstylized_img.shape: {stylized_img.shape}\n',

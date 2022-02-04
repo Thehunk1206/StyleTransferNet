@@ -124,13 +124,14 @@ def train(
             # Prerocess the images before feeding to VGG19 model
             content_img = preprocess_input(content_img*255.0)
             style_img = preprocess_input(style_img*255.0)
-            total_loss, content_loss, style_loss = nst_model.train_step(content_img, style_img)
+            _, content_loss, style_loss = nst_model.train_step(content_img, style_img)
+            style_loss = tf.math.log(style_loss)
+            content_loss = tf.math.log(content_loss)
 
         tf.print(f"ETA:{round((time.time() - t)/60, 2)} - epoch: {(e+1)} - content_loss: {content_loss} - style_loss: {style_loss} \n")
 
         tf.print('Writing summary...\n')
         with train_writer.as_default():
-            tf.summary.scalar('total_loss', total_loss, step=e)
             tf.summary.scalar('content_loss', content_loss, step=e)
             tf.summary.scalar('style_loss', style_loss, step=e)
         

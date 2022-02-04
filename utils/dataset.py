@@ -5,7 +5,6 @@ import glob
 
 import tensorflow as tf
 
-from preprocess_io import preprocess_input, process_out
 
 class TfdataPipeline:
     '''
@@ -163,8 +162,8 @@ if __name__ == "__main__":
     test_ds = tfdataset.data_loader(dataset_type='test', do_augment=True)
 
     for content, style_img in train_ds.take(1):
-        content   = preprocess_input(content*255.0)
-        style_img = preprocess_input(style_img*255.0)
+        # content   = preprocess_input(content*255.0)
+        # style_img = preprocess_input(style_img*255.0)
         # content = content*255.0
         # style_img = style_img*255.0
         # tf.print(f'content shape: {content.shape}, style shape: {style_img.shape}')
@@ -173,8 +172,8 @@ if __name__ == "__main__":
         # tf.print(f'Min of content image: {tf.reduce_min(content)}')
         # tf.print(f'Min of style image: {tf.reduce_min(style_img)}')
 
-        content = process_out(content)/255.0
-        style_img = process_out(style_img)/255.0
+        # content = process_out(content)/255.0
+        # style_img = process_out(style_img)/255.0
         plt.figure(figsize=(10,10))
         plt.subplot(1,2,1)
         plt.imshow(content.numpy()[0])

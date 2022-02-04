@@ -28,7 +28,7 @@ class ContentLoss(Loss):
         assert len(adain_vec.shape) == 4, f'Dims of adain_vec must be 4. But got {adain_vec.shape.rank}.'
 
         # Calculate the content loss
-        content_loss = tf.math.sqrt(tf.reduce_sum(tf.math.square(stylized_feat_vec - adain_vec)))
+        content_loss = tf.reduce_sum(tf.reduce_mean(tf.math.square(stylized_feat_vec - adain_vec), axis=[1,2]))
 
         return content_loss
     
@@ -56,10 +56,13 @@ class StyleLoss(Loss):
             style_feat_m, style_feat_var        = tf.nn.moments(style_feat_vec, axes=[1,2])
             stylized_feat_m, stylized_feat_var  = tf.nn.moments(stylized_feat_vec, axes=[1,2])
 
-            style_feat_std      = tf.math.sqrt(style_feat_var)
-            stylized_feat_std   = tf.math.sqrt(stylized_feat_var)
+            style_feat_std      = tf.math.sqrt(style_feat_var + 1e-6)
+            stylized_feat_std   = tf.math.sqrt(stylized_feat_var + 1e-6)
 
-            style_loss += tf.norm(stylized_feat_m - style_feat_m) + tf.norm(stylized_feat_std - style_feat_std) 
+            l2_mean = tf.reduce_sum(tf.math.square(stylized_feat_m - style_feat_m))
+            l2_std  = tf.reduce_sum(tf.math.square(stylized_feat_std - style_feat_std))
+
+            style_loss += (l2_mean + l2_std)
         
         return style_loss
     

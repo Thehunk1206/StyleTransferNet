@@ -14,17 +14,18 @@ class Encoder(object):
         self.__supported_model_arc = ['vgg']
 
         self.vgg_layer_name = [
-            'block1_conv2', 
-            'block2_conv2', 
-            'block3_conv2', 
-            'block4_conv2',
+            'block1_conv1', 
+            'block2_conv1', 
+            'block3_conv1', 
+            'block4_conv1',
+            'block5_conv1'
         ]
 
     def get_encoder(self)->Model:
         if self.model_arc == 'vgg':
             self.encoder = VGG19(include_top=False, weights='imagenet', input_shape=self.inshape)
             self.encoder.trainable = self.is_trainable
-            output = [tf.nn.relu(self.encoder.get_layer(layer).output) for layer in self.vgg_layer_name]
+            output = [self.encoder.get_layer(layer).output for layer in self.vgg_layer_name]
             return tf.keras.Model(inputs=self.encoder.input, outputs=output, name='vgg_encoder')
         else:
             raise ValueError(
