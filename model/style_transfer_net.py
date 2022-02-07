@@ -22,10 +22,6 @@ class StyleTransferNet(Model):
         self.IMG_H = IMG_H
         self.IMG_W = IMG_W
         self.encoder_model_arc = encoder_model_arc
-        self.optimizer = None
-        self.content_loss = None
-        self.style_loss = None
-        self.loss_weight = 1.0
 
         # Define StyleTransfer network
         self.encoder = Encoder(model_arc=self.encoder_model_arc, inshape=(self.IMG_H, self.IMG_W, 3))
@@ -35,7 +31,7 @@ class StyleTransferNet(Model):
 
         self.decoder = Decoder()
 
-    def call(self, content_img:tf.Tensor, style_img:tf.Tensor, training=None)->Tuple[tf.Tensor, Tuple[tf.Tensor,...], tf.Tensor, Tuple[tf.Tensor,...], Tuple[tf.Tensor,...]]:
+    def call(self, content_img:tf.Tensor, style_img:tf.Tensor, training=False)->Tuple[tf.Tensor, Tuple[tf.Tensor,...], tf.Tensor, Tuple[tf.Tensor,...], Tuple[tf.Tensor,...]]:
         content_feat = self.encoder_model(content_img) # Extract content features from content image
         style_feat = self.encoder_model(style_img) # Extract style features from style image
 
@@ -59,7 +55,7 @@ class StyleTransferNet(Model):
             loss_weight:float=2.0, 
             **kwargs
         ):
-        super(StyleTransferNet, self).compile(**kwargs)
+        super(StyleTransferNet, self).compile(optimizer=optimizer,**kwargs)
         self.optimizer = optimizer
         self.content_loss = content_loss
         self.style_loss = style_loss
@@ -94,10 +90,10 @@ class StyleTransferNet(Model):
         inp1 = tf.keras.Input(shape=(self.IMG_H, self.IMG_W, 3))
         inp2 = tf.keras.Input(shape=(self.IMG_H, self.IMG_W, 3))
 
-        style_transfer_net = Model(inputs=[inp1, inp2], outputs=self.call(inp1, inp2), name='style_transfer_net')
-        style_transfer_net.summary()
         self.decoder.summary()
         self.encoder_model.summary()
+        style_transfer_net = Model(inputs=[inp1, inp2], outputs=self.call(inp1, inp2), name='style_transfer_net')
+        style_transfer_net.summary()
         
     def get_config(self):
         return {

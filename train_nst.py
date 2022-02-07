@@ -1,12 +1,14 @@
 import os
 from time import time
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
 from tqdm import tqdm
 from datetime import datetime
 import argparse
 
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras import models
 
 from utils.dataset import TfdataPipeline
 from utils.losses import ContentLoss, StyleLoss
@@ -18,11 +20,12 @@ tf.random.set_seed(42)
 def train(
     BASE_DATASET_DIR: str = 'style_content_dataset/',
     checkpoint_dir: str = 'trained_model/',
+    pre_trained_model_dir: str = None,
     img_h: int = 256,
     img_w: int = 256,
     img_c: int = 3,
     batch_size: int = 16,
-    epochs: int = 10,
+    epochs: int = 5,
     learning_rate = 1e-3,
     loss_w:float = 0.5,
     encoder_model_arc:str = 'vgg',
@@ -34,6 +37,7 @@ def train(
     args:
         BASE_DATASET_DIR: str, the directory of the dataset
         checkpoint_dir: str, the directory to save the trained style encoder model
+        pre_trained_model_dir: str, the directory of the pre-trained model to continue training
         img_h: int, the height of the image
         img_w: int, the width of the image
         img_c: int, the number of channels of the image
@@ -79,12 +83,20 @@ def train(
     style_loss = StyleLoss()
 
     # Instantiate Style Transfer Net
-    tf.print('Creating Style Transfer Net...\n')
-    nst_model = StyleTransferNet(
-        IMG_H=img_h,
-        IMG_W=img_w,
-        encoder_model_arc=encoder_model_arc
-    )
+    tf.print('Checking for pre-trained model...\n')
+    if pre_trained_model_dir is not None:
+        if os.path.exists(pre_trained_model_dir):
+            tf.print('Pre-trained model found! Loading...\n')
+            nst_model = models.load_model(pre_trained_model_dir)
+        else:
+            tf.print(f'{pre_trained_model_dir} does not exist!\n')
+    else:
+        tf.print('Pre-trained model not found! Creating Style Transfer Net...\n')
+        nst_model = StyleTransferNet(
+            IMG_H=img_h,
+            IMG_W=img_w,
+            encoder_model_arc=encoder_model_arc
+        )
 
     # Compile the model
     tf.print('Compiling the model...\n')
@@ -94,6 +106,7 @@ def train(
         style_loss=style_loss,
         loss_weight=loss_w,
     )
+            
 
     tf.print(f'[INFO] Summary of model\n')
     nst_model.summary()
@@ -119,24 +132,37 @@ def train(
     # Training model
     tf.print('Training the model...\n')
     for e in range(epochs):
-        t = time()
-        for content_img, style_img in tqdm(train_ds, desc='Training...', unit='steps', colour='red'):
-            # Prerocess the images before feeding to VGG19 model
-            content_img = preprocess_input(content_img*255.0)
-            style_img = preprocess_input(style_img*255.0)
-            _, content_loss, style_loss = nst_model.train_step(content_img, style_img)
-            style_loss = tf.math.log(style_loss)
-            content_loss = tf.math.log(content_loss)
+        try:
+            t = time()
+            avg_style_loss = []
+            avg_content_loss = []
+            for content_img, style_img in tqdm(train_ds, desc='Training...', unit='steps', colour='red'):
+                # Prerocess the images before feeding to VGG19 model
+                content_img = preprocess_input(content_img*255.0)
+                style_img = preprocess_input(style_img*255.0)
+                content_loss, style_loss = nst_model.train_step(content_img, style_img)
+                style_loss = tf.math.log(style_loss)
+                content_loss = tf.math.log(content_loss)
+                avg_style_loss.append(style_loss)
+                avg_content_loss.append(content_loss)
+            
+            avg_style_loss = tf.reduce_mean(avg_style_loss)
+            avg_content_loss = tf.reduce_mean(avg_content_loss)
+            tf.print(f"ETA:{round((time() - t)/60, 2)} - epoch: {(e+1)} - content_loss: {avg_content_loss} - style_loss: {avg_style_loss} \n")
 
-        tf.print(f"ETA:{round((time.time() - t)/60, 2)} - epoch: {(e+1)} - content_loss: {content_loss} - style_loss: {style_loss} \n")
-
-        tf.print('Writing summary...\n')
-        with train_writer.as_default():
-            tf.summary.scalar('content_loss', content_loss, step=e)
-            tf.summary.scalar('style_loss', style_loss, step=e)
-        
-        if (e+1) % saving_freq == 0:
-            tf.print(f'Saving model at epoch {e+1}...\n')
+            tf.print('Writing summary...\n')
+            with train_writer.as_default():
+                tf.summary.scalar('content_loss', avg_content_loss, step=e)
+                tf.summary.scalar('style_loss', avg_style_loss, step=e)
+            
+            if (e+1) % saving_freq == 0:
+                tf.print(f'Saving model at epoch {e+1}...\n')
+                nst_model.save(f'{checkpoint_dir}/{nst_model.name}_iteration_{e+1}', save_format='tf')
+                nst_model.decoder.save(f'{checkpoint_dir}/{nst_model.name}_decoder_iteration_{e+1}', save_format='tf')
+                tf.print(f'Saved model at epoch {e+1}\n')
+        except:
+            tf.print(f'Error occured at epoch {e+1}\n')
+            tf.print('Saving model at epoch {e+1}...\n')
             nst_model.save(f'{checkpoint_dir}/{nst_model.name}_iteration_{e+1}', save_format='tf')
             nst_model.decoder.save(f'{checkpoint_dir}/{nst_model.name}_decoder_iteration_{e+1}', save_format='tf')
             tf.print(f'Saved model at epoch {e+1}\n')
@@ -146,6 +172,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_dir', type=str, required=True, help='The directory of the dataset')
     parser.add_argument('--checkpoint_dir', type=str, default='trained_model/', help='The directory to save the trained style encoder model')
+    parser.add_argument('--pre_trained_model_dir', type=str, default=None, help='The directory of the pre-trained nst_model')
     parser.add_argument('--img_h', type=int, default=256, help='The height of the image')
     parser.add_argument('--img_w', type=int, default=256, help='The width of the image')
     parser.add_argument('--img_c', type=int, default=3, help='The number of channels of the image')
@@ -161,6 +188,7 @@ def main():
     train(
         BASE_DATASET_DIR=args.dataset_dir,
         checkpoint_dir=args.checkpoint_dir,
+        pre_trained_model_dir=args.pre_trained_model_dir,
         img_h=args.img_h,
         img_w=args.img_w,
         img_c=args.img_c,

@@ -31,10 +31,7 @@ class AdaIn(Layer):
         content_std = tf.math.sqrt(content_var + self.epsilon)
         style_std   = tf.math.sqrt(style_var + self.epsilon)
 
-        # Calculate the normalized content image
-        normalized_content_vec = (content_vec - content_mean) / content_std
-
-        return normalized_content_vec * style_std + style_mean
+        return (content_vec - content_mean) * style_std / content_std + style_mean
     
     def get_config(self):
         return super(AdaIn,self).get_config()

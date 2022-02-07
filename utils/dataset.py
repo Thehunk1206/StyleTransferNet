@@ -80,8 +80,12 @@ class TfdataPipeline:
         style_image = tf.image.convert_image_dtype(style_image, tf.float32)
 
         # Resize the image to the desired size
-        content_image = tf.image.resize_with_pad(content_image, self.IMG_H*2, self.IMG_W*2, method=tf.image.ResizeMethod.BICUBIC)
-        style_image = tf.image.resize_with_pad(style_image, self.IMG_H*2, self.IMG_W*2, method=tf.image.ResizeMethod.BICUBIC)
+        content_image = tf.image.resize(content_image, [self.IMG_H*2, self.IMG_W*2], method=tf.image.ResizeMethod.BICUBIC)
+        style_image = tf.image.resize(style_image, [self.IMG_H*2, self.IMG_W*2], method=tf.image.ResizeMethod.BICUBIC)
+
+        # Crop the image to the desired size
+        content_image = tf.image.random_crop(content_image, [self.IMG_H, self.IMG_W, self.IMG_C])
+        style_image = tf.image.random_crop(style_image, [self.IMG_H, self.IMG_W, self.IMG_C])
 
     
         return content_image, style_image
@@ -94,9 +98,8 @@ class TfdataPipeline:
         '''
 
         x = tf.image.random_flip_left_right(x)
+        x = tf.image.random_flip_up_down(x)
         x = tf.image.random_brightness(x, max_delta=0.1)
-        x = tf.image.random_contrast(x, lower=0.9, upper=1.1)
-        x = tf.image.random_crop(x, [self.IMG_H, self.IMG_W, self.IMG_C])
         x = (x - tf.reduce_min(x)) / (tf.reduce_max(x) - tf.reduce_min(x))
 
         return x
@@ -118,7 +121,7 @@ class TfdataPipeline:
                         else (self.load_content_style_image(x,y)[0], self.load_content_style_image(x,y)[1]), 
                         num_parallel_calls=tf.data.AUTOTUNE)
                     # .cache()
-                    .shuffle(buffer_size=20)
+                    .shuffle(buffer_size=10)
                     .batch(self.batch_size)
                     .prefetch(buffer_size=tf.data.AUTOTUNE)
         )

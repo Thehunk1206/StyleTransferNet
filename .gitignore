@@ -4,3 +4,5 @@ __pycache__/
 check_corrupt_image.py
 logs/
 trained_model/
+content_images/
+style_images/

@@ -76,14 +76,13 @@ class StyleLoss(Loss):
 
 if __name__ == "__main__":
     from tensorflow.keras import Model
-    from tensorflow.keras.applications import VGG19, VGG16
+    from tensorflow.keras.applications import VGG16
 
     vgg_layers = [
         'block1_conv2', 
         'block2_conv2', 
         'block3_conv2', 
         'block4_conv2',
-        'block5_conv1'
     ]
 
     tf.random.set_seed(1)
@@ -93,7 +92,7 @@ if __name__ == "__main__":
     dummy_stylized_img  = tf.random.uniform(shape=(4, 256, 256, 3))
 
     # Create VGG19 Feature Extractor model
-    vgg = VGG19(include_top=False, input_shape=(256,256,3))
+    vgg = VGG16(include_top=False, input_shape=(256,256,3))
     vgg.trainable = False
     output = [vgg.get_layer(layer).output for layer in vgg_layers]
     vgg_model = Model(inputs=vgg.input, outputs=output)

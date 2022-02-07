@@ -1,5 +1,6 @@
 import os
 import argparse
+from sympy import content
 
 from typer import style
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -30,6 +31,35 @@ def plot_images(
     axes[2].set_title('Stylized Image')
     plt.show()
 
+def read_image(path:str, img_h:int = 256, img_w:int=256) -> tf.Tensor:
+        '''
+        Load the content and style images.
+        args:
+            path: str, the path of the image
+        return:
+            image_tensor: tf.Tensor, the image
+        '''
+        
+        # Read raw image from path
+        image = tf.io.read_file(path)
+
+        # Decode the raw image
+        image = tf.io.decode_image(image, channels=3, expand_animations=False)
+
+        # Change the dtype of the image to float32
+        image = tf.image.convert_image_dtype(image, tf.float32)
+
+        # Resize the image to the desired size
+        image = tf.image.resize(image, [img_h,img_w], method=tf.image.ResizeMethod.BICUBIC)
+        
+        # Normalize the image
+        image = (image - tf.reduce_min(image)) / (tf.reduce_max(image) - tf.reduce_min(image))
+
+        # Expand the image to 4D
+        image = tf.expand_dims(image, axis=0)
+
+        return image
+
 def get_model(model_path: str):
     assert os.path.exists(model_path), f'{model_path} does not exist'
 
@@ -58,49 +88,53 @@ def run_test(
     adain = AdaIn()
 
 
-    tf.print('[info] loading dataset...')
-    tf_dataset = TfdataPipeline(
-        BASE_DATASET_DIR=dataset_dir,
-        batch_size=1
-    )
-    test_ds = tf_dataset.data_loader(dataset_type='test', do_augment=False)
+    # tf.print('[info] loading dataset...')
+    # tf_dataset = TfdataPipeline(
+    #     BASE_DATASET_DIR=dataset_dir,
+    #     batch_size=1
+    # )
+    # test_ds = tf_dataset.data_loader(dataset_type='test', do_augment=False)
 
 
     tf.print('[info] testing...')
 
-    for content_img, style_img in test_ds.take(1):
+    style_img = read_image('style_images/abstract-painting.jpg')
+    content_img = read_image('content_images/170249.jpg')
 
-        content_img = tf.image.resize(content_img, (256, 256))
-        style_img = tf.image.resize(style_img, (256, 256))
+    style_img_p = preprocess_input(style_img*255.0)
+    content_img_p = preprocess_input(content_img*255.0)
 
-        content_img_p = preprocess_input(content_img*255.0)
-        style_img_p = preprocess_input(style_img*255.0)
+    output,_,_,_,_ = nst_model(content_img_p, style_img_p)
 
-        content_feat = encoder_model(content_img_p)
-        style_feat = encoder_model(style_img_p)
+    output = tf.clip_by_value(output, 0.0, 255.0)
+    output = output/255.0
 
-        target_feat = adain(content_feat[-1], style_feat[-1])
+    # for content_img, style_img in test_ds.take(1):
 
-        output = nst_model(target_feat)
+    #     content_img = tf.image.resize(content_img, (256, 256))
+    #     style_img = tf.image.resize(style_img, (256, 256))
 
-        output = process_output(output)
-        
-        # min max normalization
-        output = (output - tf.reduce_min(output)) / (tf.reduce_max(output) - tf.reduce_min(output))
+    #     content_img_p = preprocess_input(content_img*255.0)
+    #     style_img_p = preprocess_input(style_img*255.0)
 
-        # Clipping the values between 0 and 255
-        # output = tf.clip_by_value(output, 0.0, 255.0)
-        # output = output/255.0
+    #     output,_,_,_,_ = nst_model(content_img_p, style_img_p)
 
-        tf.print(f'[info] output shape: {output.shape}')
-        tf.print(f'[info] Max value: {tf.reduce_max(output)}')
-        tf.print(f'[info] Min value: {tf.reduce_min(output)}')
-        tf.print(f'[info] Mean value: {tf.reduce_mean(output)}')
+    #     # min max normalization
+    #     # output = (output - tf.reduce_min(output)) / (tf.reduce_max(output) - tf.reduce_min(output))
+
+    #     # Clipping the values between 0 and 255
+    #     output = tf.clip_by_value(output, 0.0, 255.0)
+    #     output = output/255.0
+
+    #     tf.print(f'[info] output shape: {output.shape}')
+    #     tf.print(f'[info] Max value: {tf.reduce_max(output)}')
+    #     tf.print(f'[info] Min value: {tf.reduce_min(output)}')
+    #     tf.print(f'[info] Mean value: {tf.reduce_mean(output)}')
 
     plot_images(content_img, style_img, output)
 
 if __name__ == "__main__":
-    model_path = 'trained_model/StyleTransferNet_decoder_iteration_5'
+    model_path = 'trained_model/StyleTransferNet_iteration_5'
 
     dataset_dir = 'style_content_dataset/'
 
