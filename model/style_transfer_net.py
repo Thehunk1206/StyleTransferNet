@@ -31,7 +31,7 @@ class StyleTransferNet(Model):
 
         self.decoder = Decoder()
 
-    def call(self, content_img:tf.Tensor, style_img:tf.Tensor, training=False)->Tuple[tf.Tensor, Tuple[tf.Tensor,...], tf.Tensor, Tuple[tf.Tensor,...], Tuple[tf.Tensor,...]]:
+    def call(self, content_img:tf.Tensor, style_img:tf.Tensor, training=True)->Tuple[tf.Tensor, Tuple[tf.Tensor,...], tf.Tensor, Tuple[tf.Tensor,...], Tuple[tf.Tensor,...]]:
         content_feat = self.encoder_model(content_img) # Extract content features from content image
         style_feat = self.encoder_model(style_img) # Extract style features from style image
 

@@ -99,15 +99,17 @@ def run_test(
     tf.print('[info] testing...')
 
     style_img = read_image('style_images/abstract-painting.jpg')
-    content_img = read_image('content_images/170249.jpg')
+    content_img = read_image('content_images/IMG_20210123_155649.jpg')
 
     style_img_p = preprocess_input(style_img*255.0)
     content_img_p = preprocess_input(content_img*255.0)
 
     output,_,_,_,_ = nst_model(content_img_p, style_img_p)
+    tf.print(output)
 
     output = tf.clip_by_value(output, 0.0, 255.0)
     output = output/255.0
+    # output = (output - tf.reduce_min(output)) / (tf.reduce_max(output) - tf.reduce_min(output))
 
     # for content_img, style_img in test_ds.take(1):
 
@@ -134,7 +136,7 @@ def run_test(
     plot_images(content_img, style_img, output)
 
 if __name__ == "__main__":
-    model_path = 'trained_model/StyleTransferNet_iteration_5'
+    model_path = 'trained_model/StyleTransferNet_iteration_4'
 
     dataset_dir = 'style_content_dataset/'
 

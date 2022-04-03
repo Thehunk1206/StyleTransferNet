@@ -37,19 +37,19 @@ class Decoder(Model):
     def __init__(self, name='StyleDecoder', *args, **kwargs):
         super(Decoder, self).__init__(name=name, *args, **kwargs)
 
-        self.block4_conv1 = layers.Conv2D(filters=512, kernel_size=3, strides=1, activation='relu', name='block4_conv1')
+        self.block4_conv1 = layers.Conv2D(filters=512, kernel_size=3, strides=1, activation='relu', padding='same', name='block4_conv1')
         # self.block4_conv2 = layers.Conv2D(filters=512, kernel_size=3, strides=1, activation='relu', name='block4_conv2')
         # self.block4_conv3 = layers.Conv2D(filters=512, kernel_size=3, strides=1, activation='relu', name='block4_conv3')
         
-        self.block3_conv1 = layers.Conv2D(filters=256, kernel_size=3, strides=1, activation='relu', name='block3_conv1')
-        self.block3_conv2 = layers.Conv2D(filters=256, kernel_size=3, strides=1, activation='relu', name='block3_conv2')
-        self.block3_conv3 = layers.Conv2D(filters=256, kernel_size=3, strides=1, activation='relu', name='block3_conv3')
+        self.block3_conv1 = layers.Conv2D(filters=256, kernel_size=3, strides=1, activation='relu', padding='same', name='block3_conv1')
+        self.block3_conv2 = layers.Conv2D(filters=256, kernel_size=3, strides=1, activation='relu', padding='same', name='block3_conv2')
+        self.block3_conv3 = layers.Conv2D(filters=256, kernel_size=3, strides=1, activation='relu', padding='same', name='block3_conv3')
 
-        self.block2_conv1 = layers.Conv2D(filters=128, kernel_size=3, strides=1, activation='relu', name='block2_conv1')
-        self.block2_conv2 = layers.Conv2D(filters=128, kernel_size=3, strides=1, activation='relu', name='block2_conv2')
+        self.block2_conv1 = layers.Conv2D(filters=128, kernel_size=3, strides=1, activation='relu', padding='same', name='block2_conv1')
+        self.block2_conv2 = layers.Conv2D(filters=128, kernel_size=3, strides=1, activation='relu', padding='same', name='block2_conv2')
 
-        self.block1_conv1 = layers.Conv2D(filters=64, kernel_size=3, strides=1, activation='relu', name='block1_conv1')
-        self.block1_conv2 = layers.Conv2D(filters=64, kernel_size=3, strides=1, activation='relu', name='block1_conv2')
+        self.block1_conv1 = layers.Conv2D(filters=64, kernel_size=3, strides=1, activation='relu', padding='same', name='block1_conv1')
+        self.block1_conv2 = layers.Conv2D(filters=64, kernel_size=3, strides=1, activation='relu', padding='same', name='block1_conv2')
 
         # Reflection padding
         self.reflection_padding = ReflectionPadding2D(padding=(1, 1))
@@ -60,29 +60,21 @@ class Decoder(Model):
         assert inputs.shape.rank == 4, f'The shape of the input must be (batch_size, height, width, channels).'
 
         x = self.block4_conv1(inputs)
-        x = self.reflection_padding(x)
         # x = self.block4_conv2(x)
         # x = self.block4_conv3(x)
         x = layers.UpSampling2D(size=(2, 2))(x)
         
         x = self.block3_conv1(x)
-        x = self.reflection_padding(x)
         x = self.block3_conv2(x)
-        x = self.reflection_padding(x)
         x = self.block3_conv3(x)
-        x = self.reflection_padding(x)
         x = layers.UpSampling2D(size=(2, 2))(x)
 
         x = self.block2_conv1(x)
-        x = self.reflection_padding(x)
         x = self.block2_conv2(x)
-        x = self.reflection_padding(x) 
         x = layers.UpSampling2D(size=(2, 2))(x)
 
         x = self.block1_conv1(x)
-        x = self.reflection_padding(x)
         x = self.block1_conv2(x)
-        x = self.reflection_padding(x)
 
         x = self.out(x)
 

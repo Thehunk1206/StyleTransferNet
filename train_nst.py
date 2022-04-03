@@ -1,4 +1,5 @@
 import os
+import sys
 from time import time
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -136,7 +137,7 @@ def train(
             t = time()
             avg_style_loss = []
             avg_content_loss = []
-            for content_img, style_img in tqdm(train_ds, desc='Training...', unit='steps', colour='red'):
+            for content_img, style_img in tqdm(train_ds, desc='Training...', unit='steps'):
                 # Prerocess the images before feeding to VGG19 model
                 content_img = preprocess_input(content_img*255.0)
                 style_img = preprocess_input(style_img*255.0)
@@ -166,6 +167,7 @@ def train(
             nst_model.save(f'{checkpoint_dir}/{nst_model.name}_iteration_{e+1}', save_format='tf')
             nst_model.decoder.save(f'{checkpoint_dir}/{nst_model.name}_decoder_iteration_{e+1}', save_format='tf')
             tf.print(f'Saved model at epoch {e+1}\n')
+            sys.exit()
 
 
 def main():
